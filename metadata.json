@@ -1,0 +1,5 @@
+{
+  "name": "Festive Style Mixer",
+  "description": "A Gemini 3 Pro powered application to virtually try on Christmas outfits. Upload a person, an outfit, and describe a scene to generate a photorealistic composite.",
+  "requestFramePermissions": []
+}
