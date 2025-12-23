@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { ResultCard } from './components/ResultCard';
-import { checkApiKey, requestApiKey, generateComposite } from './services/geminiService';
+import { checkApiKey, requestApiKey, generateComposite, generateLiveVideo } from './services/geminiService';
 import { UploadedImage, AppStatus } from './types';
 
 export default function App() {
@@ -9,8 +9,11 @@ export default function App() {
   const [clothesImg, setClothesImg] = useState<UploadedImage | null>(null);
   const [personImg, setPersonImg] = useState<UploadedImage | null>(null);
   const [scenePrompt, setScenePrompt] = useState<string>('');
+  
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function App() {
     setStatus(AppStatus.GENERATING);
     setErrorMsg(null);
     setResultUrl(null);
+    setVideoUrl(null);
 
     try {
       const url = await generateComposite(clothesImg, personImg, scenePrompt);
@@ -55,6 +59,28 @@ export default function App() {
     }
   };
 
+  const handleAnimate = async () => {
+    if (!resultUrl || !scenePrompt) return;
+
+    setIsAnimating(true);
+    setErrorMsg(null);
+
+    try {
+        const video = await generateLiveVideo(resultUrl, scenePrompt);
+        setVideoUrl(video);
+    } catch (err: any) {
+        console.error(err);
+        if (err.message === "API_KEY_INVALID") {
+            setHasKey(false);
+            setErrorMsg("API Session expired during video generation. Please reconnect.");
+         } else {
+            setErrorMsg("Failed to generate video. Please try again.");
+         }
+    } finally {
+        setIsAnimating(false);
+    }
+  };
+
   if (!hasKey) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-4">
@@ -63,7 +89,7 @@ export default function App() {
             Festive Style Mixer
           </h1>
           <p className="text-slate-400 mb-8">
-            Experience the power of Gemini 3 Pro Image. Please verify your API key to access high-quality image composition.
+            Experience the power of Gemini 3 Pro Image & Veo. Please verify your API key to access high-quality image composition and video generation.
           </p>
           <div className="space-y-4">
             <button
@@ -94,7 +120,7 @@ export default function App() {
               G
             </div>
             <span className="font-bold text-lg tracking-tight">Festive Style Mixer</span>
-            <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 ml-2">Gemini 3 Pro</span>
+            <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 ml-2">Gemini 3 Pro + Veo</span>
           </div>
           <button 
             onClick={() => setHasKey(false)}
@@ -147,10 +173,10 @@ export default function App() {
               <div className="mt-8">
                 <button
                   onClick={handleGenerate}
-                  disabled={!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING}
+                  disabled={!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING || isAnimating}
                   className={`
                     w-full py-4 px-6 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-95
-                    ${(!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING)
+                    ${(!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING || isAnimating)
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'
                       : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-900/50'
                     }
@@ -181,6 +207,7 @@ export default function App() {
                  <li>Use full-body photos for the person.</li>
                  <li>Ensure the clothes image is clear and flat or on a mannequin.</li>
                  <li>Be specific about lighting in your scene description.</li>
+                 <li>Video generation may take 10-30 seconds.</li>
                </ul>
             </div>
           </div>
@@ -190,6 +217,9 @@ export default function App() {
             <ResultCard 
               status={status} 
               resultImageUrl={resultUrl} 
+              resultVideoUrl={videoUrl}
+              onAnimate={handleAnimate}
+              isAnimating={isAnimating}
               loadingMessage="Stitching outfit & scene..."
             />
           </div>
