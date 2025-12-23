@@ -36,7 +36,7 @@ export default function App() {
   };
 
   const handleGenerate = async () => {
-    if (!clothesImg || !personImg || !scenePrompt.trim()) return;
+    if (!clothesImg || !personImg) return;
 
     setStatus(AppStatus.GENERATING);
     setErrorMsg(null);
@@ -60,7 +60,7 @@ export default function App() {
   };
 
   const handleAnimate = async () => {
-    if (!resultUrl || !scenePrompt) return;
+    if (!resultUrl) return;
 
     setIsAnimating(true);
     setErrorMsg(null);
@@ -160,12 +160,12 @@ export default function App() {
               <div className="space-y-3">
                  <h2 className="text-xl font-bold flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-sm">2</span>
-                  Set the Scene
+                  Set the Scene <span className="text-xs font-normal text-slate-500 ml-2">(Optional)</span>
                 </h2>
                 <textarea
                   value={scenePrompt}
                   onChange={(e) => setScenePrompt(e.target.value)}
-                  placeholder="E.g., A cozy living room with a fireplace, snow falling outside the window, warm lighting..."
+                  placeholder="Leave empty to keep the original background. Or describe a new scene (e.g., A snowy forest)..."
                   className="w-full h-32 bg-slate-950 border border-slate-700 rounded-xl p-4 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none resize-none transition-all placeholder:text-slate-600"
                 />
               </div>
@@ -173,10 +173,10 @@ export default function App() {
               <div className="mt-8">
                 <button
                   onClick={handleGenerate}
-                  disabled={!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING || isAnimating}
+                  disabled={!clothesImg || !personImg || status === AppStatus.GENERATING || isAnimating}
                   className={`
                     w-full py-4 px-6 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-95
-                    ${(!clothesImg || !personImg || !scenePrompt || status === AppStatus.GENERATING || isAnimating)
+                    ${(!clothesImg || !personImg || status === AppStatus.GENERATING || isAnimating)
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'
                       : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-900/50'
                     }
@@ -206,7 +206,7 @@ export default function App() {
                <ul className="list-disc pl-4 space-y-1">
                  <li>Use full-body photos for the person.</li>
                  <li>Ensure the clothes image is clear and flat or on a mannequin.</li>
-                 <li>Be specific about lighting in your scene description.</li>
+                 <li>If you leave scene empty, lighting might still shift slightly to blend the clothes.</li>
                  <li>Video generation may take 10-30 seconds.</li>
                </ul>
             </div>
@@ -220,7 +220,7 @@ export default function App() {
               resultVideoUrl={videoUrl}
               onAnimate={handleAnimate}
               isAnimating={isAnimating}
-              loadingMessage="Stitching outfit & scene..."
+              loadingMessage="Stitching outfit & preserving identity..."
             />
           </div>
 

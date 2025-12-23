@@ -39,35 +39,48 @@ export const generateComposite = async (
   // Always create a new instance to ensure we have the latest key if selected via dialog
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+  const hasScene = sceneDescription && sceneDescription.trim().length > 0;
+
+  const contextInstruction = hasScene
+    ? `**3. SCENE REPLACEMENT:**
+       - **REPLACE** the background completely with this scene description: "${sceneDescription}".
+       - Adjust the lighting on the person and the garment to match this new environment naturally.
+       - **DO NOT** alter the person's facial structure or skin tone color due to lighting changes.`
+    : `**3. SCENE PRESERVATION (CRITICAL):**
+       - **DO NOT CHANGE THE BACKGROUND.** You MUST keep the exact original background from Image 2 (Model).
+       - **DO NOT CHANGE THE LIGHTING.** The lighting direction and intensity must remain identical to Image 2.
+       - **DO NOT CHANGE THE ENVIRONMENT.** The location must look exactly the same.
+       - The goal is ONLY to change the clothes, leaving the rest of the photo untouched.`;
+
   const prompt = `
-    Generate a high-quality, photorealistic image based on the following instructions.
+    You are a professional high-end photo retoucher specializing in "Virtual Try-On" technology.
     
-    You are an expert photo editor and compositor.
+    **TASK:** Digitally dress the person from **Image 2 (Model)** in the clothing from **Image 1 (Garment)**.
     
-    **GOAL:** 
-    Take the person from 'Image 2 (Model)' and dress them in the 'Image 1 (Garment)', placing them in the 'Scene Description'.
+    **INPUTS:**
+    - **Image 1 (Clothing):** The garment to be worn.
+    - **Image 2 (Base Model):** The person, pose, body, and context to use as the base.
     
-    **STRICT FACE PRESERVATION GUIDELINES (CRITICAL):**
-    - The face in the output MUST match 'Image 2' perfectly. 
-    - **DO NOT CHANGE:** The eyes, eye shape, eye color, smile, mouth curvature, teeth visibility, nose shape, or facial expression.
-    - **DO NOT CHANGE:** The gaze direction or the emotion on the face.
-    - If the person is smiling in Image 2, they MUST be smiling exactly the same way in the result.
-    - The face should look like a copy-paste of the original identity.
+    **STRICT COMPOSITING RULES (ZERO TOLERANCE FOR HALLUCINATION):**
     
-    **STRICT BODY SHAPE PRESERVATION (CRITICAL):**
-    - **RETAIN PHYSIQUE:** You MUST preserve the exact body proportions, weight, and build of the person in Image 2.
-    - **DO NOT ALTER MEASUREMENTS:** Do not change the waist circumference, bust size, hip width, shoulder width, or arm thickness.
-    - **NO SLIMMING OR RESHAPING:** Do not idealize the body type. Do not make the person thinner, more muscular, or curvier than they are in the original photo.
-    - **FIT:** The clothing from Image 1 must be warped and draped to fit the *existing* body volume of Image 2. The body must NOT be morphed to fit the clothes.
-    
-    **CLOTHING & SCENE:**
-    - Replace the original clothing of the person with 'Image 1'.
-    - Generate the background according to the 'Scene Description'.
-    - Lighting must be realistic and consistent with the scene.
-    
-    **OUTPUT QUALITY:**
-    - Photorealistic, high resolution. 
-    - Seamless blending of the preserved face/body with the new outfit and background.
+    1.  **THE PERSON (IMMUTABLE BASE):**
+        - The pixel data for the face, hair, hands, and skin tone MUST come from **Image 2**.
+        - **ABSOLUTE IDENTITY MATCH:** If the face changes even slightly (eyes, nose, mouth shape, expression), the result is a FAILURE. It must be the EXACT same person.
+        - **ABSOLUTE POSE MATCH:** The head tilt, arm position, finger placement, and body posture must be IDENTICAL to **Image 2**.
+        - **ABSOLUTE BODY SHAPE MATCH:** Do not slim, flatten, or enhance the body. Keep the exact waist, bust, and hip measurements of **Image 2**.
+        - **FACIAL EXPRESSION:** If the person is smiling, they must smile exactly the same way. If serious, they must be serious.
+
+    2.  **THE CLOTHING (TRANSFORMATION):**
+        - Warp and drape the clothing from **Image 1** onto the body of **Image 2**.
+        - Respect the physics of the fabric.
+        - The clothes adapt to the body; the body does NOT adapt to the clothes.
+        - Remove the old clothes from Image 2 completely.
+
+    ${contextInstruction}
+
+    **OUTPUT:**
+    - A photorealistic, seamless composite image.
+    - High resolution, sharp details.
   `;
 
   try {
@@ -140,10 +153,15 @@ export const generateLiveVideo = async (
   const base64Data = imageSrc.split(',')[1];
   const mimeType = imageSrc.substring(imageSrc.indexOf(':') + 1, imageSrc.indexOf(';'));
 
+  // If scene is empty, provide a generic "keep it subtle" prompt so video generation doesn't hallucinate wild movements
+  const contextPrompt = sceneDescription && sceneDescription.trim().length > 0
+    ? sceneDescription
+    : "Keep the original background atmosphere and lighting.";
+
   try {
     let operation = await ai.models.generateVideos({
       model: VIDEO_MODEL_NAME,
-      prompt: `Create a 'Live Photo' style video (approx 3 seconds). Subtle, natural motion. Breathing, slight wind, or background movement. ${sceneDescription}`,
+      prompt: `Create a 'Live Photo' style video (approx 3 seconds). Subtle, natural motion. Breathing, slight wind, or background movement. ${contextPrompt}`,
       image: {
         imageBytes: base64Data,
         mimeType: mimeType,
