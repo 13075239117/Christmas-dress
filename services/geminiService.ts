@@ -47,41 +47,50 @@ export const generateComposite = async (
        - Adjust the lighting on the person and the garment to match this new environment naturally.
        - **DO NOT** alter the person's facial structure or skin tone color due to lighting changes.`
     : `**3. SCENE PRESERVATION (LOCKED LAYER):**
-       - **BACKGROUND:** The background must be PIXEL-PERFECT identical to Image 2. Do not blur, shift, or relight it.
-       - **LIGHTING:** The shadows and highlights on the face and background must remain exactly where they are in Image 2.`;
+       - **BACKGROUND:** The background must be PIXEL-PERFECT identical to IMAGE 2. Do not blur, shift, or relight it.
+       - **LIGHTING:** The shadows and highlights on the face and background must remain exactly where they are in IMAGE 2.`;
 
   const prompt = `
-    You are an advanced AI image compositor acting as a "Magic Eraser + Inpainter".
-    
-    **GOAL:** Replace ONLY the clothing region of **Image 2** with the garment from **Image 1**.
-    
-    **CRITICAL CONSTRAINT: NON-DESTRUCTIVE EDITING**
-    Everything outside the clothing area of Image 2 is considered a **LOCKED LAYER**. You are FORBIDDEN from generating new pixels for the face, hair, hands, or background. You must simply "pass through" the original details.
-    
-    **DETAILED INSTRUCTIONS:**
+    You are an advanced AI image compositor. Your task is "Virtual Try-On".
 
-    1.  **HAIR (EXTREME CAUTION):**
+    **CRITICAL INPUT DEFINITIONS (READ CAREFULLY):**
+    - **[IMAGE 1] (First Image Provided):** SOURCE GARMENT. This image contains the clothing to be used. IGNORE any person/body/face inside Image 1.
+    - **[IMAGE 2] (Second Image Provided):** TARGET MODEL (THE BASE). This image contains the person who will wear the clothes. 
+
+    **THE TASK:**
+    Take the clothing from [IMAGE 1] and warp/drape it onto the body of the person in [IMAGE 2].
+
+    **FATAL ERROR PREVENTION - DO NOT DO THIS:**
+    - ❌ **DO NOT** put the face from Image 2 onto the body of Image 1. (No Face Swapping).
+    - ❌ **DO NOT** output Image 1 with a new face.
+    - ❌ **DO NOT** change the pose of Image 2 to match Image 1.
+    
+    **CORRECT EXECUTION FLOW:**
+    1.  Start with **[IMAGE 2]** as your canvas. The output pixel dimensions and composition must match Image 2.
+    2.  Keep the Head, Hair, Hands, and Background of [IMAGE 2] exactly as they are (**LOCKED LAYERS**).
+    3.  Erase the original clothes on the person in [IMAGE 2].
+    4.  Generate the clothes from [IMAGE 1] onto the body of [IMAGE 2].
+
+    **DETAILED CONSTRAINTS:**
+
+    1.  **HAIR & HEAD (LOCKED FROM IMAGE 2):**
         - **Texture Lock:** Do not smooth out frizz, split ends, or messy strands. If the hair looks dry or oily in Image 2, keep it exactly that way.
         - **Geometry Lock:** Do not change the volume, length, or silhouette. The outline of the hair against the background must trace the exact same path.
-        - **Strand-Level Detail:** Preserve every single "flyaway" hair (individual strands sticking out). Do not "clean up" the hairstyle.
-        - **Interaction:** The clothes go UNDER the hair. If long hair falls over the chest, the hair remains on top, and the new clothes are visible underneath/around it.
+        - **Interaction:** The clothes go UNDER the hair of Image 2.
 
-    2.  **POSE & BODY (EXTREME CAUTION):**
-        - **Bone Structure:** Do not move the shoulders, neck, or head by even 1 millimeter.
-        - **Hands & Fingers:** If hands are visible, their position, knuckle wrinkles, and fingernails must be identical to Image 2.
-        - **Facial Expression:** Do not change the gaze direction or the micro-expressions around the mouth and eyes.
+    2.  **POSE & BODY (LOCKED FROM IMAGE 2):**
+        - **Bone Structure:** Do not move the shoulders, neck, or head of Image 2 by even 1 millimeter.
+        - **Hands:** Preserve hand positions from Image 2.
 
     3.  **CLOTHING SYNTHESIS:**
-        - Identify the "clothing mask" on the person in Image 2.
-        - Generate the item from Image 1 *only* within that mask (and adjusted for the new shape of the garment).
-        - Ensure the new clothes follow the fold and wrinkle logic dictated by the person's original pose.
+        - Adapt the fabric from Image 1 to the body shape of Image 2.
     
     ${contextInstruction}
 
     **SUMMARY:**
-    - Image 2 is the Truth.
-    - Only the pixels corresponding to the fabric of the outfit should change.
-    - If I overlay the result on top of Image 2, the face and hair should align perfectly.
+    - The Base is IMAGE 2.
+    - The Clothes are from IMAGE 1.
+    - Result = [IMAGE 2 Body/Head/Bg] + [IMAGE 1 Clothes].
   `;
 
   try {
