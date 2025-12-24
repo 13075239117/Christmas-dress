@@ -46,41 +46,42 @@ export const generateComposite = async (
        - **REPLACE** the background completely with this scene description: "${sceneDescription}".
        - Adjust the lighting on the person and the garment to match this new environment naturally.
        - **DO NOT** alter the person's facial structure or skin tone color due to lighting changes.`
-    : `**3. SCENE PRESERVATION (CRITICAL):**
-       - **DO NOT CHANGE THE BACKGROUND.** You MUST keep the exact original background from Image 2 (Model).
-       - **DO NOT CHANGE THE LIGHTING.** The lighting direction and intensity must remain identical to Image 2.
-       - **DO NOT CHANGE THE ENVIRONMENT.** The location must look exactly the same.
-       - The goal is ONLY to change the clothes, leaving the rest of the photo untouched.`;
+    : `**3. SCENE PRESERVATION (LOCKED LAYER):**
+       - **BACKGROUND:** The background must be PIXEL-PERFECT identical to Image 2. Do not blur, shift, or relight it.
+       - **LIGHTING:** The shadows and highlights on the face and background must remain exactly where they are in Image 2.`;
 
   const prompt = `
-    You are a professional high-end photo retoucher specializing in "Virtual Try-On" technology.
+    You are an advanced AI image compositor acting as a "Magic Eraser + Inpainter".
     
-    **TASK:** Digitally dress the person from **Image 2 (Model)** in the clothing from **Image 1 (Garment)**.
+    **GOAL:** Replace ONLY the clothing region of **Image 2** with the garment from **Image 1**.
     
-    **INPUTS:**
-    - **Image 1 (Clothing):** The garment to be worn.
-    - **Image 2 (Base Model):** The person, pose, body, and context to use as the base.
+    **CRITICAL CONSTRAINT: NON-DESTRUCTIVE EDITING**
+    Everything outside the clothing area of Image 2 is considered a **LOCKED LAYER**. You are FORBIDDEN from generating new pixels for the face, hair, hands, or background. You must simply "pass through" the original details.
     
-    **STRICT COMPOSITING RULES (ZERO TOLERANCE FOR HALLUCINATION):**
-    
-    1.  **THE PERSON (IMMUTABLE BASE):**
-        - The pixel data for the face, hair, hands, and skin tone MUST come from **Image 2**.
-        - **ABSOLUTE IDENTITY MATCH:** If the face changes even slightly (eyes, nose, mouth shape, expression), the result is a FAILURE. It must be the EXACT same person.
-        - **ABSOLUTE POSE MATCH:** The head tilt, arm position, finger placement, and body posture must be IDENTICAL to **Image 2**.
-        - **ABSOLUTE BODY SHAPE MATCH:** Do not slim, flatten, or enhance the body. Keep the exact waist, bust, and hip measurements of **Image 2**.
-        - **FACIAL EXPRESSION:** If the person is smiling, they must smile exactly the same way. If serious, they must be serious.
+    **DETAILED INSTRUCTIONS:**
 
-    2.  **THE CLOTHING (TRANSFORMATION):**
-        - Warp and drape the clothing from **Image 1** onto the body of **Image 2**.
-        - Respect the physics of the fabric.
-        - The clothes adapt to the body; the body does NOT adapt to the clothes.
-        - Remove the old clothes from Image 2 completely.
+    1.  **HAIR (EXTREME CAUTION):**
+        - **Texture Lock:** Do not smooth out frizz, split ends, or messy strands. If the hair looks dry or oily in Image 2, keep it exactly that way.
+        - **Geometry Lock:** Do not change the volume, length, or silhouette. The outline of the hair against the background must trace the exact same path.
+        - **Strand-Level Detail:** Preserve every single "flyaway" hair (individual strands sticking out). Do not "clean up" the hairstyle.
+        - **Interaction:** The clothes go UNDER the hair. If long hair falls over the chest, the hair remains on top, and the new clothes are visible underneath/around it.
 
+    2.  **POSE & BODY (EXTREME CAUTION):**
+        - **Bone Structure:** Do not move the shoulders, neck, or head by even 1 millimeter.
+        - **Hands & Fingers:** If hands are visible, their position, knuckle wrinkles, and fingernails must be identical to Image 2.
+        - **Facial Expression:** Do not change the gaze direction or the micro-expressions around the mouth and eyes.
+
+    3.  **CLOTHING SYNTHESIS:**
+        - Identify the "clothing mask" on the person in Image 2.
+        - Generate the item from Image 1 *only* within that mask (and adjusted for the new shape of the garment).
+        - Ensure the new clothes follow the fold and wrinkle logic dictated by the person's original pose.
+    
     ${contextInstruction}
 
-    **OUTPUT:**
-    - A photorealistic, seamless composite image.
-    - High resolution, sharp details.
+    **SUMMARY:**
+    - Image 2 is the Truth.
+    - Only the pixels corresponding to the fabric of the outfit should change.
+    - If I overlay the result on top of Image 2, the face and hair should align perfectly.
   `;
 
   try {
@@ -109,7 +110,7 @@ export const generateComposite = async (
         // High quality image settings
         imageConfig: {
             imageSize: "1K",
-            aspectRatio: "3:4" // Portrait usually works better for full body fashion
+            aspectRatio: "3:4"
         }
       },
     });

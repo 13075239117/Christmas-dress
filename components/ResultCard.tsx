@@ -8,6 +8,7 @@ interface ResultCardProps {
   loadingMessage?: string;
   onAnimate: () => void;
   isAnimating: boolean;
+  onPreview?: (url: string) => void;
 }
 
 export const ResultCard: React.FC<ResultCardProps> = ({ 
@@ -16,7 +17,8 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   resultVideoUrl, 
   loadingMessage,
   onAnimate,
-  isAnimating
+  isAnimating,
+  onPreview
 }) => {
   const [activeTab, setActiveTab] = useState<'image' | 'video'>('image');
 
@@ -95,11 +97,25 @@ export const ResultCard: React.FC<ResultCardProps> = ({
               </div>
             ) : (
               <div className="relative group w-full h-full flex flex-col items-center justify-center">
-                <img 
-                  src={resultImageUrl} 
-                  alt="Generated Result" 
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
-                />
+                <div 
+                  className="relative cursor-zoom-in max-w-full max-h-[70vh]"
+                  onClick={() => onPreview && onPreview(resultImageUrl)}
+                >
+                  <img 
+                    src={resultImageUrl} 
+                    alt="Generated Result" 
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                  />
+                  {/* Hover hint */}
+                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                        Click to zoom
+                      </div>
+                   </div>
+                </div>
                 
                 {/* Only show Animate button if we are in image mode AND (video doesn't exist OR we want to allow regen) */}
                 {!resultVideoUrl && (

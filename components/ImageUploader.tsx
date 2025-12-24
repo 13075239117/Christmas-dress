@@ -6,6 +6,7 @@ interface ImageUploaderProps {
   image: UploadedImage | null;
   onImageUpload: (img: UploadedImage) => void;
   onRemove: () => void;
+  onPreview?: (url: string) => void;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -13,6 +14,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   image,
   onImageUpload,
   onRemove,
+  onPreview,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +51,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       
       <div 
         className={`
-          relative w-full aspect-[3/4] rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden
+          relative w-full aspect-[3/4] rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden group
           ${image 
             ? 'border-emerald-500/50 bg-slate-800' 
             : 'border-slate-600 hover:border-emerald-400 hover:bg-slate-800/50 cursor-pointer bg-slate-900'
@@ -66,22 +68,35 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         />
 
         {image ? (
-          <div className="relative w-full h-full group">
+          <div 
+            className="relative w-full h-full cursor-zoom-in"
+            onClick={() => onPreview && onPreview(image.previewUrl)}
+          >
             <img 
               src={image.previewUrl} 
               alt={label} 
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg transform transition-transform hover:scale-105"
-              >
-                Remove
-              </button>
+            {/* Hover overlay with actions */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+               {/* View Button (Visual Hint) */}
+               <div className="pointer-events-none text-white opacity-80 mb-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+               </div>
+
+              <div className="absolute bottom-4 w-full flex justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent opening modal
+                      onRemove();
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg transform transition-transform hover:scale-105"
+                  >
+                    Remove
+                  </button>
+              </div>
             </div>
           </div>
         ) : (

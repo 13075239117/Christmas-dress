@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { ResultCard } from './components/ResultCard';
+import { ImageModal } from './components/ImageModal';
 import { checkApiKey, requestApiKey, generateComposite, generateLiveVideo } from './services/geminiService';
 import { UploadedImage, AppStatus } from './types';
 
@@ -15,6 +16,9 @@ export default function App() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // State for image modal
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyKey = async () => {
@@ -81,6 +85,10 @@ export default function App() {
     }
   };
 
+  const handlePreview = (url: string) => {
+    setPreviewImageUrl(url);
+  };
+
   if (!hasKey) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-4">
@@ -112,6 +120,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
+      {/* Global Image Modal */}
+      <ImageModal 
+        isOpen={!!previewImageUrl} 
+        imageUrl={previewImageUrl} 
+        onClose={() => setPreviewImageUrl(null)} 
+      />
+
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -148,12 +163,14 @@ export default function App() {
                   image={clothesImg} 
                   onImageUpload={setClothesImg}
                   onRemove={() => setClothesImg(null)}
+                  onPreview={handlePreview}
                 />
                 <ImageUploader 
                   label="Person" 
                   image={personImg} 
                   onImageUpload={setPersonImg}
                   onRemove={() => setPersonImg(null)}
+                  onPreview={handlePreview}
                 />
               </div>
 
@@ -221,6 +238,7 @@ export default function App() {
               onAnimate={handleAnimate}
               isAnimating={isAnimating}
               loadingMessage="Stitching outfit & preserving identity..."
+              onPreview={handlePreview}
             />
           </div>
 
